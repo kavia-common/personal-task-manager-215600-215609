@@ -26,9 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 // PUBLIC_INTERFACE
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,18 +44,18 @@ fun TaskEditorSheet(
 ) {
     /**
      * Modal bottom sheet for creating/updating a task.
-     * Keep implementation simple to avoid IR inlining problems with default params.
+     * Uses rememberModalBottomSheetState so Density is taken from CompositionLocal.
+     * Avoids inline-heavy patterns to prevent IR compiler issues on some CI setups.
      */
     if (!visible) return
 
-    val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate)
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() },
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Column(
             modifier = Modifier
@@ -76,7 +73,7 @@ fun TaskEditorSheet(
 
             OutlinedTextField(
                 value = title,
-                onValueChange = { value -> onTitleChange(value) },
+                onValueChange = onTitleChange,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Title") },
                 singleLine = true
@@ -86,7 +83,7 @@ fun TaskEditorSheet(
 
             OutlinedTextField(
                 value = description,
-                onValueChange = { value -> onDescriptionChange(value) },
+                onValueChange = onDescriptionChange,
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 100.dp),
@@ -95,42 +92,51 @@ fun TaskEditorSheet(
 
             if (isEditing) {
                 Spacer(Modifier.padding(top = 8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = completed,
-                        onCheckedChange = { checked -> onCompletedChange(checked) },
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = MaterialTheme.colorScheme.secondary
-                        )
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Mark as completed", style = MaterialTheme.typography.bodyMedium)
-                }
+                CompletedToggleRow(
+                    checked = completed,
+                    onCheckedChange = onCompletedChange
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
-                    scope.launch {
-                        onSave()
-                        onDismiss()
-                    }
+                    onSave()
+                    onDismiss()
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text(if (isEditing) "Save Changes" else "Add Task")
+                val label = if (isEditing) "Save Changes" else "Add Task"
+                Text(text = label)
             }
 
             Spacer(Modifier.padding(top = 16.dp))
         }
+    }
+}
+
+@Composable
+private fun CompletedToggleRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = CheckboxDefaults.colors(
+                checkedColor = MaterialTheme.colorScheme.secondary
+            )
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text("Mark as completed", style = MaterialTheme.typography.bodyMedium)
     }
 }

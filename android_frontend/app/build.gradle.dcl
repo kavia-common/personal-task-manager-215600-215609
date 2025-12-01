@@ -3,6 +3,7 @@ androidApplication {
 
     dependencies {
         // Compose and Material3
+        // Rely on Compose BOM for aligned versions; Material3 uses explicit stable version.
         implementation(platform("androidx.compose:compose-bom:2024.10.01"))
         implementation("androidx.activity:activity-compose:1.9.3")
         implementation("androidx.compose.ui:ui")
