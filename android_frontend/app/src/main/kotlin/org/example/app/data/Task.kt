@@ -1,14 +1,11 @@
 package org.example.app.data
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
 /**
- * Entity representing a Task in the local Room database.
+ * Plain data model representing a Task.
+ * Persistence is handled by LocalTaskStore (SharedPreferences JSON), not Room.
  */
-@Entity(tableName = "tasks")
 data class Task(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0L,
+    val id: Long = 0L,
     val title: String,
     val description: String = "",
     val completed: Boolean = false,

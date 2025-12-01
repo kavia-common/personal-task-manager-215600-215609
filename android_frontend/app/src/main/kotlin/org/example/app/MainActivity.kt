@@ -6,7 +6,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import org.example.app.data.Task
 import org.example.app.data.TaskRepository
 import org.example.app.ui.TaskViewModel
@@ -38,41 +43,50 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun ToDoApp(vm: TaskViewModel) {
+    // Collect flows explicitly
     val tasks by vm.tasks.collectAsState()
-    var editorVisible by remember { mutableStateOf(false) }
-    var isEditing by remember { mutableStateOf(false) }
+    val editorState by vm.editorState.collectAsState()
+
+    // Use rememberSaveable to avoid inline remember issues and survive config changes
+    var editorVisible by rememberSaveable { mutableStateOf(false) }
+    var isEditing by rememberSaveable { mutableStateOf(false) }
+
+    // Explicit lambdas to avoid invokeDynamic indirection
+    val onToggle: (Task) -> Unit = { task ->
+        vm.toggleCompleted(task.id, !task.completed)
+    }
+    val onEdit: (Task) -> Unit = { task ->
+        isEditing = true
+        vm.startEdit(task)
+        editorVisible = true
+    }
+    val onDelete: (Task) -> Unit = { task ->
+        vm.delete(task.id)
+    }
+    val onAdd: () -> Unit = {
+        isEditing = false
+        vm.startCreate()
+        editorVisible = true
+    }
 
     TaskListScreen(
         tasks = tasks,
-        onToggle = { task: Task ->
-            vm.toggleCompleted(task.id, !task.completed)
-        },
-        onEdit = { task ->
-            isEditing = true
-            vm.startEdit(task)
-            editorVisible = true
-        },
-        onDelete = { task ->
-            vm.delete(task.id)
-        },
-        onAdd = {
-            isEditing = false
-            vm.startCreate()
-            editorVisible = true
-        }
+        onToggle = onToggle,
+        onEdit = onEdit,
+        onDelete = onDelete,
+        onAdd = onAdd
     )
 
-    val editorState by vm.editorState.collectAsState()
     TaskEditorSheet(
         visible = editorVisible,
         isEditing = isEditing,
         title = editorState.title,
         description = editorState.description,
         completed = editorState.completed,
-        onTitleChange = vm::updateTitle,
-        onDescriptionChange = vm::updateDescription,
-        onCompletedChange = vm::updateCompleted,
+        onTitleChange = { vm.updateTitle(it) },
+        onDescriptionChange = { vm.updateDescription(it) },
+        onCompletedChange = { vm.updateCompleted(it) },
         onDismiss = { editorVisible = false },
-        onSave = { vm.save { /* no-op */ } }
+        onSave = { vm.save() }
     )
 }

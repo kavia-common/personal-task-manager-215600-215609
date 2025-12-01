@@ -2,6 +2,7 @@ package org.example.app.data
 
 import android.content.Context
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class TaskRepository private constructor(private val store: LocalTaskStore) {
 
@@ -22,7 +23,7 @@ class TaskRepository private constructor(private val store: LocalTaskStore) {
     // PUBLIC_INTERFACE
     fun observeTask(id: Long): Flow<Task?> {
         /** Observe a single task by id. */
-        return kotlinx.coroutines.flow.map(store.tasks) { list -> list.find { it.id == id } }
+        return store.tasks.map { list -> list.find { it.id == id } }
     }
 
     // PUBLIC_INTERFACE

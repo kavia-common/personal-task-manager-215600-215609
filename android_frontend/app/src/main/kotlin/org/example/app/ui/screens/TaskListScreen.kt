@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.example.app.data.Task
 
+@OptIn(ExperimentalMaterial3Api::class)
 // PUBLIC_INTERFACE
 @Composable
 fun TaskListScreen(
