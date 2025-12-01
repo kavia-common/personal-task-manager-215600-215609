@@ -2,7 +2,12 @@ package org.example.app.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.example.app.data.Task
 import org.example.app.data.TaskRepository
@@ -16,7 +21,7 @@ data class TaskEditorState(
 
 class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
 
-    private val _tasks = repository.observeTasks().stateIn(
+    private val _tasks: StateFlow<List<Task>> = repository.observeTasks().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = emptyList()
@@ -46,19 +51,19 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
     // PUBLIC_INTERFACE
     fun updateTitle(newTitle: String) {
         /** Update the editor's title. */
-        _editorState.update { it.copy(title = newTitle) }
+        _editorState.update { current -> current.copy(title = newTitle) }
     }
 
     // PUBLIC_INTERFACE
     fun updateDescription(newDescription: String) {
         /** Update the editor's description. */
-        _editorState.update { it.copy(description = newDescription) }
+        _editorState.update { current -> current.copy(description = newDescription) }
     }
 
     // PUBLIC_INTERFACE
     fun updateCompleted(completed: Boolean) {
         /** Update the editor's completed flag. */
-        _editorState.update { it.copy(completed = completed) }
+        _editorState.update { current -> current.copy(completed = completed) }
     }
 
     // PUBLIC_INTERFACE

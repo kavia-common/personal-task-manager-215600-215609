@@ -4,6 +4,10 @@ import android.content.Context
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+/**
+ * Repository for tasks backed by LocalTaskStore (SharedPreferences JSON).
+ * Note: No Room/SQL usage; all persistence is local JSON for simplicity.
+ */
 class TaskRepository private constructor(private val store: LocalTaskStore) {
 
     companion object {

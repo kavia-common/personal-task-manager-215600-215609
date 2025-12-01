@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
+import androidx.core.view.WindowCompat
 import org.example.app.data.Task
 import org.example.app.data.TaskRepository
 import org.example.app.ui.TaskViewModel
@@ -33,6 +34,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Ensure decor fits system windows; no functional change for build
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             OceanProfessionalTheme {
                 ToDoApp(viewModel)
@@ -43,7 +46,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun ToDoApp(vm: TaskViewModel) {
-    // Collect flows explicitly
+    // Collect flows explicitly; provide initial values for previews if needed
     val tasks by vm.tasks.collectAsState()
     val editorState by vm.editorState.collectAsState()
 
@@ -51,7 +54,7 @@ private fun ToDoApp(vm: TaskViewModel) {
     var editorVisible by rememberSaveable { mutableStateOf(false) }
     var isEditing by rememberSaveable { mutableStateOf(false) }
 
-    // Explicit lambdas to avoid invokeDynamic indirection
+    // Explicit lambdas to avoid implicit 'it' ambiguities
     val onToggle: (Task) -> Unit = { task ->
         vm.toggleCompleted(task.id, !task.completed)
     }
@@ -83,9 +86,9 @@ private fun ToDoApp(vm: TaskViewModel) {
         title = editorState.title,
         description = editorState.description,
         completed = editorState.completed,
-        onTitleChange = { vm.updateTitle(it) },
-        onDescriptionChange = { vm.updateDescription(it) },
-        onCompletedChange = { vm.updateCompleted(it) },
+        onTitleChange = { newTitle -> vm.updateTitle(newTitle) },
+        onDescriptionChange = { newDesc -> vm.updateDescription(newDesc) },
+        onCompletedChange = { checked -> vm.updateCompleted(checked) },
         onDismiss = { editorVisible = false },
         onSave = { vm.save() }
     )

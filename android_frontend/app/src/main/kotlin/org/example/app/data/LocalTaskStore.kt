@@ -35,14 +35,14 @@ class LocalTaskStore(
 
     private fun encode(tasks: List<Task>): String {
         val arr = JSONArray()
-        tasks.forEach {
+        tasks.forEach { t ->
             val o = JSONObject()
-            o.put("id", it.id)
-            o.put("title", it.title)
-            o.put("description", it.description)
-            o.put("completed", it.completed)
-            o.put("createdAt", it.createdAt)
-            o.put("updatedAt", it.updatedAt)
+            o.put("id", t.id)
+            o.put("title", t.title)
+            o.put("description", t.description)
+            o.put("completed", t.completed)
+            o.put("createdAt", t.createdAt)
+            o.put("updatedAt", t.updatedAt)
             arr.put(o)
         }
         return arr.toString()
@@ -71,7 +71,7 @@ class LocalTaskStore(
         val now = System.currentTimeMillis()
         val current = _tasks.value
         val newId = (current.maxOfOrNull { it.id } ?: 0L) + 1L
-        val updated = listOf(
+        val updated: List<Task> = listOf(
             Task(id = newId, title = title, description = description, completed = false, createdAt = now, updatedAt = now)
         ) + current
         persist(updated)
@@ -81,24 +81,28 @@ class LocalTaskStore(
 
     suspend fun update(id: Long, title: String, description: String, completed: Boolean) = withContext(io) {
         val now = System.currentTimeMillis()
-        val updated = _tasks.value.map {
-            if (it.id == id) it.copy(title = title, description = description, completed = completed, updatedAt = now) else it
-        }.sortedWith(compareBy<Task> { it.completed }.thenByDescending { it.updatedAt })
+        val updated: List<Task> = _tasks.value
+            .map { t ->
+                if (t.id == id) t.copy(title = title, description = description, completed = completed, updatedAt = now) else t
+            }
+            .sortedWith(compareBy<Task> { it.completed }.thenByDescending { it.updatedAt })
         persist(updated)
         _tasks.value = updated
     }
 
     suspend fun delete(id: Long) = withContext(io) {
-        val updated = _tasks.value.filterNot { it.id == id }
+        val updated: List<Task> = _tasks.value.filterNot { it.id == id }
         persist(updated)
         _tasks.value = updated
     }
 
     suspend fun setCompleted(id: Long, completed: Boolean) = withContext(io) {
         val now = System.currentTimeMillis()
-        val updated = _tasks.value.map {
-            if (it.id == id) it.copy(completed = completed, updatedAt = now) else it
-        }.sortedWith(compareBy<Task> { it.completed }.thenByDescending { it.updatedAt })
+        val updated: List<Task> = _tasks.value
+            .map { t ->
+                if (t.id == id) t.copy(completed = completed, updatedAt = now) else t
+            }
+            .sortedWith(compareBy<Task> { it.completed }.thenByDescending { it.updatedAt })
         persist(updated)
         _tasks.value = updated
     }
