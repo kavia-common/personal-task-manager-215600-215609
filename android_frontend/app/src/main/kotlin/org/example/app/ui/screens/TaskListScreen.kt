@@ -5,9 +5,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.example.app.data.Task
 
@@ -125,22 +126,29 @@ private fun TaskItem(
         shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .clip(MaterialTheme.shapes.medium)
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(12.dp)
-        ) {
-            Checkbox(
-                checked = task.completed,
-                onCheckedChange = { onToggle() },
-                colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.secondary)
-            )
+        val outerModifier = Modifier
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(12.dp)
+
+        // Replace Row with a Box-based layout to avoid inline Row paths.
+        Box(modifier = outerModifier) {
+            // Checkbox aligned to start-center
+            Box(modifier = Modifier.align(Alignment.CenterStart)) {
+                Checkbox(
+                    checked = task.completed,
+                    onCheckedChange = { onToggle() },
+                    colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.secondary)
+                )
+            }
+
+            // Text content placed to the right of the checkbox
+            val startPaddingForText: Dp = 48.dp // space for checkbox touch target
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 8.dp)
+                    .align(Alignment.CenterStart)
+                    .padding(start = startPaddingForText + 8.dp)
+                    .fillMaxWidth(0.8f) // leave space for action icons
             ) {
                 Text(
                     text = task.title,
@@ -160,19 +168,39 @@ private fun TaskItem(
                     )
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                IconButton(
-                    onClick = onEdit,
-                    colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit")
-                }
-                IconButton(
-                    onClick = onDelete,
-                    colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete")
-                }
+
+            // Actions aligned to end-center
+            ActionsInline(
+                modifier = Modifier.align(Alignment.CenterEnd),
+                onEdit = onEdit,
+                onDelete = onDelete
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActionsInline(
+    modifier: Modifier = Modifier,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    // Simple two-icon layout without Row; use a Box baseline with offsets.
+    Box(modifier = modifier) {
+        IconButton(
+            onClick = onEdit,
+            colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+        ) {
+            Icon(Icons.Default.Edit, contentDescription = "Edit")
+        }
+        // Position delete icon to the left of edit by a fixed offset
+        val horizontalGap = 48.dp
+        Box(modifier = Modifier.offset(x = -horizontalGap)) {
+            IconButton(
+                onClick = onDelete,
+                colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = "Delete")
             }
         }
     }
